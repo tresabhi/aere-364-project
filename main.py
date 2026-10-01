@@ -34,6 +34,7 @@ right_motor = pwmio.PWMOut(
 
 # -1 = max left, 0 = stop, 1 = max right
 def power(input):
+    input = max(-1, min(1, input))
     left_motor.duty_cycle = to_duty_cycle(1.5 - input / 2)
     right_motor.duty_cycle = to_duty_cycle(1.5 + input / 2)
 
@@ -52,6 +53,8 @@ while not imu.calibrated:
 
 print("IMU calibrated")
 
+last_theta = 0
+theta_history = []
 while True:
     time.sleep(1 / LOOP_RATE)
 
@@ -65,9 +68,18 @@ while True:
         continue
 
     x = (dt - MIN_INPUT) / (MAX_INPUT - MIN_INPUT)
-    desired_theta = normalize_angle(2 * math.pi * x)
+    desired_theta = math.pi * (2 * x - 1)
+    current_theta = to_rad(imu.euler[0])
 
-    current_theta = normalize_angle(to_rad(-imu.euler[0]))
-    delta_theta = math.pi - normalize_angle(desired_theta + math.pi - current_theta)
+    d_theta = current_theta - last_theta
+    last_theta = current_theta
 
-    power(delta_theta / math.pi / 10)
+    delta_theta = current_theta - desired_theta
+
+    if delta_theta > math.pi:
+        delta_theta -= 2 * math.pi
+    elif delta_theta < -math.pi:
+        delta_theta += 2 * math.pi
+
+    print(delta_theta)
+    power(delta_theta / (2 * math.pi) * 0.1)
