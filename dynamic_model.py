@@ -684,7 +684,8 @@ class dynamic_model(object):
     @property
     def imu_calibrated(self):
         # Auto-calibrate after 30 seconds
-        if time.monotonic()-self.model_start_time >= 30.0:
+        # if time.monotonic()-self.model_start_time >= 30.0:
+        if time.monotonic()-self.model_start_time >= 1.0:
             return True
         return False
     
